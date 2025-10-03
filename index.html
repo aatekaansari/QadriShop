@@ -576,7 +576,7 @@
             const defaultTitle = settings.name || 'Qadri Shop';
             const defaultDescription = 'Shop for a wide range of products.';
             const defaultImage = settings.logoUrl || 'https://i.ibb.co/sHq53bT/shop-logo-removebg-preview.png'; // Default to logo if available, else a placeholder
-            const baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/') + '/'; // Get base URL without current file name
+            let baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/') + '/'; // Get base URL without current file name
 
             const pageTitle = product ? product.title : defaultTitle;
             const pageDescription = product ? (product.description || defaultDescription) : defaultDescription;
@@ -611,19 +611,29 @@
             }
 
             // Construct the share URL with the product ID
-            const shareUrl = `${window.location.origin}${window.location.pathname}?product=${productId}`;
+            let baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/') + '/';
+            const shareUrl = `${baseUrl}?product=${productId}`;
             
             // Update meta tags for this specific product
             updateMetaTags(product);
 
             // Show the custom share dialog
-            showShareDialog(productId, productTitle, shareUrl);
+            showShareDialog(productId, productTitle, shareUrl, product);
         };
 
-        function showShareDialog(productId, productTitle, shareUrl) {
+        function showShareDialog(productId, productTitle, shareUrl, product) {
             shareWhatsappBtn.onclick = () => {
                 if (settings.whatsappNumber) {
-                    const encodedMessage = encodeURIComponent(`Check out this product from ${settings.name || 'Qadri Shop'}: ${productTitle}\n${shareUrl}`);
+                    let message = `Check out this product from ${settings.name || 'Qadri Shop'}: ${productTitle}`;
+                    if (product) {
+                        message += `\nPrice: ₹${product.price}`;
+                        message += `\nDescription: ${product.description.substring(0, 100)}...`; // Short desc to avoid long message
+                        if (product.imageUrls && product.imageUrls.length > 0) {
+                            message += `\nImage: ${product.imageUrls[0]}`; // Add image URL for preview
+                        }
+                    }
+                    message += `\n${shareUrl}`;
+                    const encodedMessage = encodeURIComponent(message);
                     window.open(`https://wa.me/${settings.whatsappNumber}?text=${encodedMessage}`, '_blank');
                 } else {
                     alert("WhatsApp number not configured. Please copy the link manually.");
@@ -656,7 +666,6 @@
             shareCancelBtn.onclick = null;
             // Reset meta tags to default after dialog closes, or when navigating away from product page
             // For now, we'll leave them as is until the next product is shared or page reloads.
-            // A more robust solution might involve resetting on screen change.
             updateMetaTags(null); // Reset to default
         }
         // --- End Share Dialog Functions ---
@@ -800,29 +809,6 @@
                 showProductDetails(productId, allProducts[productId]);
             }
         }
-
-        // Modified shareProduct function (as described above)
-        window.shareProduct = (productId, productTitle) => {
-            const product = allProducts[productId];
-            if (!product) {
-                console.error("Product not found for sharing:", productId);
-                updateMetaTags(null); // Reset to default
-                const shareUrl = window.location.origin + window.location.pathname;
-                showShareDialog(null, "Qadri Shop", shareUrl); // Show generic dialog if product not found
-                return;
-            }
-
-            // Construct the share URL with the product ID
-            // Dynamically adjust the base URL if your app is in a subdirectory
-            const baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/') + '/';
-            const shareUrl = `${baseUrl}?product=${productId}`;
-            
-            // Update meta tags for this specific product
-            updateMetaTags(product);
-
-            // Show the custom share dialog
-            showShareDialog(productId, productTitle, shareUrl);
-        };
 
         function updateMetaTags(product) {
             const defaultTitle = settings.name || 'Qadri Shop';
