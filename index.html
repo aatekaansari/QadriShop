@@ -6,12 +6,17 @@
     <title>Qadri Shop</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     
-    <!-- Open Graph Meta Tags for better sharing preview -->
-    <meta property="og:title" content="Qadri Shop - Your Products">
-    <meta property="og:description" content="Discover amazing products at Qadri Shop.">
-    <!-- og:image and og:url will be set dynamically in JavaScript -->
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Qadri Shop - Product Name">
+    <meta property="og:description" content="Product Description">
     <meta property="og:image" content="URL_TO_PRODUCT_IMAGE">
     <meta property="og:url" content="URL_TO_PRODUCT">
+    <meta property="og:type" content="website">
+    <!-- Twitter Card Meta Tags (optional, for Twitter sharing) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Qadri Shop - Product Name">
+    <meta name="twitter:description" content="Product Description">
+    <meta name="twitter:image" content="URL_TO_PRODUCT_IMAGE">
 
     <style>
         :root {
@@ -543,8 +548,32 @@
         const shareCancelBtn = document.getElementById('share-cancel-btn');
 
         function showShareDialog(productId, productTitle) {
+            // Dynamically construct the share URL, including product details for potential Open Graph tags
             const shareUrl = `${window.location.origin}${window.location.pathname}?product=${productId}`;
             
+            // Set Open Graph Meta Tags for the product
+            const product = allProducts[productId]; // Get product data
+            if (product) {
+                // Update meta tags for sharing preview
+                document.querySelector('meta[property="og:title"]').setAttribute('content', product.title);
+                document.querySelector('meta[property="og:description"]').setAttribute('content', product.description || '');
+                document.querySelector('meta[property="og:image"]').setAttribute('content', product.imageUrls[0] || ''); // Assuming first image is the preview
+                document.querySelector('meta[property="og:url"]').setAttribute('content', shareUrl);
+                // Twitter Card meta tags
+                document.querySelector('meta[name="twitter:title"]').setAttribute('content', product.title);
+                document.querySelector('meta[name="twitter:description"]').setAttribute('content', product.description || '');
+                document.querySelector('meta[name="twitter:image"]').setAttribute('content', product.imageUrls[0] || '');
+            } else {
+                // Reset to default if product not found or invalid
+                document.querySelector('meta[property="og:title"]').setAttribute('content', 'Qadri Shop');
+                document.querySelector('meta[property="og:description"]').setAttribute('content', 'Discover amazing products at Qadri Shop.');
+                document.querySelector('meta[property="og:image"]').setAttribute('content', ''); // No default image, or a generic site image
+                document.querySelector('meta[property="og:url"]').setAttribute('content', window.location.origin + window.location.pathname);
+                document.querySelector('meta[name="twitter:title"]').setAttribute('content', 'Qadri Shop');
+                document.querySelector('meta[name="twitter:description"]').setAttribute('content', 'Discover amazing products at Qadri Shop.');
+                document.querySelector('meta[name="twitter:image"]').setAttribute('content', '');
+            }
+
             // WhatsApp Sharing Logic
             shareWhatsappBtn.onclick = () => {
                 if (settings.whatsappNumber) { // Check if whatsapp number is available globally
