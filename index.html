@@ -6,17 +6,12 @@
     <title>Qadri Shop</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Qadri Shop">
-    <meta property="og:description" content="Shop for a wide range of products.">
-    <meta property="og:image" content="https://i.ibb.co/sHq53bT/shop-logo-removebg-preview.png"> <!-- Default Logo -->
-    <meta property="og:url" content="https://qadri-shop.web.app/"> <!-- Base URL -->
-    <meta property="og:type" content="website">
-    <!-- Twitter Card Meta Tags (optional, for Twitter sharing) -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Qadri Shop">
-    <meta name="twitter:description" content="Shop for a wide range of products.">
-    <meta name="twitter:image" content="https://i.ibb.co/sHq53bT/shop-logo-removebg-preview.png"> <!-- Default Logo -->
+    <!-- Open Graph Meta Tags for better sharing preview -->
+    <meta property="og:title" content="Qadri Shop - Your Products">
+    <meta property="og:description" content="Discover amazing products at Qadri Shop.">
+    <!-- og:image and og:url will be set dynamically in JavaScript -->
+    <meta property="og:image" content="URL_TO_PRODUCT_IMAGE">
+    <meta property="og:url" content="URL_TO_PRODUCT">
 
     <style>
         :root {
@@ -488,29 +483,8 @@
                     } else {
                         document.getElementById('whatsapp-icon').style.display = 'none';
                     }
-                } else {
-                    // Set default values if settings are not found
-                    document.title = 'Qadri Shop';
-                    document.getElementById('website-title').textContent = 'Qadri Shop';
-                    document.getElementById('website-logo').src = 'https://i.ibb.co/sHq53bT/shop-logo-removebg-preview.png'; // Default Logo
-                    const logoLink = document.getElementById('website-logo').parentElement;
-                    if (logoLink && logoLink.tagName === 'A') {
-                        logoLink.href = window.location.origin; // Default to origin
-                    }
-                    document.getElementById('whatsapp-icon').style.display = 'none';
                 }
-            }).catch(e => {
-                console.error("Could not load settings. Check Firebase Rules or Network.", e);
-                // Set default values if Firebase call fails
-                document.title = 'Qadri Shop';
-                document.getElementById('website-title').textContent = 'Qadri Shop';
-                document.getElementById('website-logo').src = 'https://i.ibb.co/sHq53bT/shop-logo-removebg-preview.png'; // Default Logo
-                const logoLink = document.getElementById('website-logo').parentElement;
-                if (logoLink && logoLink.tagName === 'A') {
-                    logoLink.href = window.location.origin; // Default to origin
-                }
-                document.getElementById('whatsapp-icon').style.display = 'none';
-            });
+            }).catch(e => console.error("Could not load settings. Check Firebase Rules.", e));
         }
         
         const screens = document.querySelectorAll('.screen');
@@ -556,9 +530,6 @@
             } else if (primaryBtnText) {
                 singleBtn.style.display = 'block'; singleBtn.textContent = primaryBtnText;
                 singleBtn.onclick = () => { onPrimaryClick(); closeDialog(); };
-            } else { // No buttons or only cancel, for simplicity we'll just show a message
-                singleBtn.style.display = 'block'; singleBtn.textContent = 'OK';
-                singleBtn.onclick = () => { closeDialog(); };
             }
             dialogOverlay.style.display = 'flex';
         }
@@ -571,77 +542,24 @@
         const shareCopyLinkBtn = document.getElementById('share-copy-link-btn');
         const shareCancelBtn = document.getElementById('share-cancel-btn');
 
-        // Function to update Meta Tags for Social Sharing
-        function updateMetaTags(product) {
-            const defaultTitle = settings.name || 'Qadri Shop';
-            const defaultDescription = 'Shop for a wide range of products.';
-            const defaultImage = settings.logoUrl || 'https://i.ibb.co/sHq53bT/shop-logo-removebg-preview.png'; // Default to logo if available, else a placeholder
-            let baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/') + '/'; // Get base URL without current file name
-
-            const pageTitle = product ? product.title : defaultTitle;
-            const pageDescription = product ? (product.description || defaultDescription) : defaultDescription;
-            const pageImage = product ? (product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : defaultImage) : defaultImage;
-            const pageUrl = product ? `${baseUrl}?product=${product.id}` : baseUrl;
-
-            // Open Graph Meta Tags
-            document.querySelector('meta[property="og:title"]').setAttribute('content', pageTitle);
-            document.querySelector('meta[property="og:description"]').setAttribute('content', pageDescription);
-            document.querySelector('meta[property="og:image"]').setAttribute('content', pageImage);
-            document.querySelector('meta[property="og:url"]').setAttribute('content', pageUrl);
-            document.querySelector('meta[property="og:type"]').setAttribute('content', product ? 'product' : 'website'); // Use 'product' type for product pages
-
-            // Twitter Card Meta Tags
-            document.querySelector('meta[name="twitter:card"]').setAttribute('content', product ? 'summary_large_image' : 'summary'); // Use summary_large_image for products
-            document.querySelector('meta[name="twitter:title"]').setAttribute('content', pageTitle);
-            document.querySelector('meta[name="twitter:description"]').setAttribute('content', pageDescription);
-            document.querySelector('meta[name="twitter:image"]').setAttribute('content', pageImage);
-        }
-
-        // Modified shareProduct function
-        window.shareProduct = (productId, productTitle) => {
-            // Find the product data from allProducts
-            const product = allProducts[productId];
-            if (!product) {
-                console.error("Product not found for sharing:", productId);
-                // Fallback to default meta tags and share a generic link
-                updateMetaTags(null);
-                const shareUrl = window.location.origin + window.location.pathname;
-                showShareDialog(null, defaultTitle, shareUrl); // Pass null product for generic dialog
-                return;
-            }
-
-            // Construct the share URL with the product ID
-            let baseUrl = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/') + '/';
-            const shareUrl = `${baseUrl}?product=${productId}`;
+        function showShareDialog(productId, productTitle) {
+            const shareUrl = `${window.location.origin}${window.location.pathname}?product=${productId}`;
             
-            // Update meta tags for this specific product
-            updateMetaTags(product);
-
-            // Show the custom share dialog
-            showShareDialog(productId, productTitle, shareUrl, product);
-        };
-
-        function showShareDialog(productId, productTitle, shareUrl, product) {
+            // WhatsApp Sharing Logic
             shareWhatsappBtn.onclick = () => {
-                if (settings.whatsappNumber) {
-                    let message = `Check out this product from ${settings.name || 'Qadri Shop'}: ${productTitle}`;
-                    if (product) {
-                        message += `\nPrice: ₹${product.price}`;
-                        message += `\nDescription: ${product.description.substring(0, 100)}...`; // Short desc to avoid long message
-                        if (product.imageUrls && product.imageUrls.length > 0) {
-                            message += `\nImage: ${product.imageUrls[0]}`; // Add image URL for preview
-                        }
-                    }
-                    message += `\n${shareUrl}`;
-                    const encodedMessage = encodeURIComponent(message);
+                if (settings.whatsappNumber) { // Check if whatsapp number is available globally
+                    // Encode message and URL for safety and proper transmission
+                    const encodedMessage = encodeURIComponent(`Check out this product from Qadri Shop: ${productTitle} ${shareUrl}`);
                     window.open(`https://wa.me/${settings.whatsappNumber}?text=${encodedMessage}`, '_blank');
                 } else {
+                    // Fallback or show a message if whatsapp number is not set
                     alert("WhatsApp number not configured. Please copy the link manually.");
-                    prompt('Copy this link to share:', shareUrl);
+                    prompt('Copy this link to share:', shareUrl); // Fallback prompt
                 }
                 closeShareDialog();
             };
 
+            // Copy Link Logic
             shareCopyLinkBtn.onclick = async () => {
                 try {
                     await navigator.clipboard.writeText(shareUrl);
@@ -649,7 +567,7 @@
                 } catch (err) {
                     console.error('Failed to copy link: ', err);
                     alert('Could not copy link. Please copy manually from the prompt.');
-                    prompt('Copy this link to share:', shareUrl);
+                    prompt('Copy this link to share:', shareUrl); // Fallback prompt
                 }
                 closeShareDialog();
             };
@@ -664,9 +582,6 @@
             shareWhatsappBtn.onclick = null;
             shareCopyLinkBtn.onclick = null;
             shareCancelBtn.onclick = null;
-            // Reset meta tags to default after dialog closes, or when navigating away from product page
-            // For now, we'll leave them as is until the next product is shared or page reloads.
-            updateMetaTags(null); // Reset to default
         }
         // --- End Share Dialog Functions ---
 
@@ -701,7 +616,7 @@
                 cartBadge.style.display = 'none';
                 cartBadge.textContent = '0';
             }
-            loadInitialData(); // Load data after auth state is set
+            loadInitialData();
         });
         
         document.getElementById('signup-btn').addEventListener('click', () => { const n = document.getElementById('signup-name').value, e = document.getElementById('signup-email').value, p = document.getElementById('signup-password').value; if (!n) return alert('Name required.'); createUserWithEmailAndPassword(auth, e, p).then(c => set(ref(db, `users/${c.user.uid}`), { name: n, email: e })).catch(err => alert(err.message)); });
@@ -727,77 +642,15 @@
         });
         document.getElementById('change-password-btn').addEventListener('click', () => { const p = document.getElementById('new-password').value; if (p.length < 6) return alert('Password too short.'); updatePassword(auth.currentUser, p).then(() => { alert('Password updated!'); document.getElementById('new-password').value = ''; }).catch(err => alert(`Error: ${err.message}`)); });
 
-        function loadInitialData() { 
-            loadWebsiteSettings(); 
-            loadBanners(); 
-            loadCategories(); 
-            loadProducts(); 
-            // Check URL for product ID immediately after initial data load
-            checkUrlForProduct(); 
-        }
-        let slideIndex = 0, slideInterval; 
-        function showSlide(n) { 
-            const w = document.getElementById('banner-wrapper'), d = document.querySelectorAll('.dot'); 
-            if (!w || d.length === 0) return; 
-            if (n >= d.length) { slideIndex = 0; } 
-            if (n < 0) { slideIndex = d.length - 1; } 
-            w.style.transform = `translateX(${-slideIndex * 100}%)`; 
-            d.forEach(dot => dot.classList.remove('active')); 
-            if(d[slideIndex]) d[slideIndex].classList.add('active'); 
-        } 
-        function startSlider() { 
-            stopSlider(); 
-            slideInterval = setInterval(() => { 
-                slideIndex++; 
-                showSlide(slideIndex); 
-            }, 3000); 
-        } 
-        function stopSlider() { clearInterval(slideInterval); }
-        function loadBanners() { 
-            onValue(ref(db, 'banners'), (s) => { 
-                const w = document.getElementById('banner-wrapper'), d = document.getElementById('banner-dots'); 
-                w.innerHTML = ''; d.innerHTML = ''; 
-                let i = 0; 
-                s.forEach(c => { 
-                    w.innerHTML += `<img src="${c.val().imageUrl}">`; 
-                    const dot = document.createElement('span'); 
-                    dot.className = 'dot'; 
-                    dot.onclick = () => { 
-                        slideIndex = i; 
-                        showSlide(slideIndex); 
-                        stopSlider(); 
-                        startSlider(); 
-                    }; 
-                    d.appendChild(dot); 
-                    i++; 
-                }); 
-                if(i > 0) { 
-                    showSlide(slideIndex); 
-                    startSlider(); 
-                } 
-            }); 
-        }
-        function loadCategories() { 
-            onValue(ref(db, 'categories'), s => { 
-                const c = document.getElementById('category-container'); 
-                c.innerHTML = `<div class="category-item" id="all-category-btn"><img src="https://i.ibb.co/9gY1P1j/all-items.png" alt="All"><p>All</p></div>`; // Default "All" category
-                s.forEach(child => { 
-                    const cat = child.val(), el = document.createElement('div'); 
-                    el.className = 'category-item'; 
-                    el.innerHTML = `<img src="${cat.imageUrl}" alt="${cat.name}"><p>${cat.name}</p>`; 
-                    el.onclick = () => filterProductsByCategory(cat.name); 
-                    c.appendChild(el); 
-                }); 
-                document.getElementById('all-category-btn').onclick = () => { 
-                    currentFilters.category = null; 
-                    applyFiltersAndSort(); 
-                }; 
-            }); 
-        }
+        function loadInitialData() { loadWebsiteSettings(); loadBanners(); loadCategories(); loadProducts(); }
+        let slideIndex = 0, slideInterval; function showSlide(n) { const w = document.getElementById('banner-wrapper'), d = document.querySelectorAll('.dot'); if (!w || d.length === 0) return; if (n >= d.length) { slideIndex = 0; } if (n < 0) { slideIndex = d.length - 1; } w.style.transform = `translateX(${-slideIndex * 100}%)`; d.forEach(dot => dot.classList.remove('active')); if(d[slideIndex]) d[slideIndex].classList.add('active'); } function startSlider() { stopSlider(); slideInterval = setInterval(() => { slideIndex++; showSlide(slideIndex); }, 3000); } function stopSlider() { clearInterval(slideInterval); }
+        function loadBanners() { onValue(ref(db, 'banners'), (s) => { const w = document.getElementById('banner-wrapper'), d = document.getElementById('banner-dots'); w.innerHTML = ''; d.innerHTML = ''; let i = 0; s.forEach(c => { w.innerHTML += `<img src="${c.val().imageUrl}">`; const dot = document.createElement('span'); dot.className = 'dot'; dot.onclick = () => { slideIndex = i; showSlide(slideIndex); stopSlider(); startSlider(); }; d.appendChild(dot); i++; }); if(i > 0) { showSlide(slideIndex); startSlider(); } }); }
+        function loadCategories() { onValue(ref(db, 'categories'), s => { const c = document.getElementById('category-container'); c.innerHTML = `<div class="category-item" id="all-category-btn"><img src="https://i.ibb.co/9gY1P1j/all-items.png" alt="All"><p>All</p></div>`; s.forEach(child => { const cat = child.val(), el = document.createElement('div'); el.className = 'category-item'; el.innerHTML = `<img src="${cat.imageUrl}" alt="${cat.name}"><p>${cat.name}</p>`; el.onclick = () => filterProductsByCategory(cat.name); c.appendChild(el); }); document.getElementById('all-category-btn').onclick = () => { currentFilters.category = null; applyFiltersAndSort(); }; }); }
         function loadProducts() { 
             onValue(ref(db, 'products'), s => { 
                 allProducts = s.val() || {}; 
                 applyFiltersAndSort(); // Apply filters and sort after loading products
+                checkUrlForProduct(); // This function is defined below
             }); 
         }
         
@@ -810,48 +663,21 @@
             }
         }
 
-        function updateMetaTags(product) {
-            const defaultTitle = settings.name || 'Qadri Shop';
-            const defaultDescription = 'Shop for a wide range of products.';
-            const defaultImage = settings.logoUrl || 'https://i.ibb.co/sHq53bT/shop-logo-removebg-preview.png'; // Default to logo if available, else a placeholder
-            
-            // Determine the base URL correctly
-            let currentPath = window.location.pathname;
-            let baseUrl = window.location.origin;
-            // Remove the last segment (current file name or hash part)
-            const pathSegments = currentPath.split('/');
-            if (pathSegments.length > 1 && pathSegments[pathSegments.length - 1] === '') {
-                // If the path ends with a slash, it's likely a directory index
-            } else if (pathSegments.length > 1) {
-                // Remove the last segment if it's not the root
-                pathSegments.pop();
-                baseUrl += pathSegments.join('/');
-                if (!baseUrl.endsWith('/')) baseUrl += '/'; // Ensure it ends with a slash
-            } else {
-                // Root path
-                if (!baseUrl.endsWith('/')) baseUrl += '/';
-            }
+        // Function to share a product
+        window.shareProduct = (productId, productTitle) => {
+            // Show the custom share dialog
+            showShareDialog(productId, productTitle);
+        };
 
-
-            const pageTitle = product ? product.title : defaultTitle;
-            const pageDescription = product ? (product.description || defaultDescription) : defaultDescription;
-            const pageImage = product && product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : defaultImage;
-            const pageUrl = product ? `${baseUrl}?product=${product.id}` : baseUrl;
-
-            // Open Graph Meta Tags
-            document.querySelector('meta[property="og:title"]').setAttribute('content', pageTitle);
-            document.querySelector('meta[property="og:description"]').setAttribute('content', pageDescription);
-            document.querySelector('meta[property="og:image"]').setAttribute('content', pageImage);
-            document.querySelector('meta[property="og:url"]').setAttribute('content', pageUrl);
-            document.querySelector('meta[property="og:type"]').setAttribute('content', product ? 'product' : 'website'); 
-
-            // Twitter Card Meta Tags
-            document.querySelector('meta[name="twitter:card"]').setAttribute('content', product ? 'summary_large_image' : 'summary'); 
-            document.querySelector('meta[name="twitter:title"]').setAttribute('content', pageTitle);
-            document.querySelector('meta[name="twitter:description"]').setAttribute('content', pageDescription);
-            document.querySelector('meta[name="twitter:image"]').setAttribute('content', pageImage);
+        function renderProducts(products, containerId = 'product-grid') { 
+            const g = document.getElementById(containerId); g.innerHTML = ''; if(!products || Object.keys(products).length === 0) { g.innerHTML = `<p class="empty-cart">No products found.</p>`; return; } 
+            for(const id in products) { const p = products[id], c = document.createElement('div'); c.className = 'product-card'; c.innerHTML = `<div class="product-image-container" data-product-id="${id}"><img src="${p.imageUrls[0]}"></div><div class="product-card-info"><div class="product-title-row"><h3>${p.title}</h3>
+            <button class="share-icon-btn" onclick="event.stopPropagation(); shareProduct('${id}', '${p.title.replace(/'/g, "\\'")}');">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"></path></svg>
+            </button>
+            <span class="fav-icon ${userFavorites.includes(id)?'favorited':''}" data-product-id="${id}">♥</span></div><p>₹${p.price}</p></div>`; g.appendChild(c); }
         }
-
+        
         window.showProductDetails = (id, product) => {
             currentProduct = {id, ...product};
             const c = document.getElementById('product-details-content');
@@ -887,7 +713,7 @@
                 const cartBadge = document.getElementById('cart-badge');
                 c.innerHTML = ''; 
 
-                if(!s.exists() || Object.keys(s.val()).length === 0){ 
+                if(!s.exists()){ 
                     c.innerHTML = `<p class="empty-cart">Cart is empty.</p>`; 
                     btn.style.display='none';
                     cartBadge.style.display = 'none';
@@ -1029,12 +855,11 @@
                 const orderData = { userId: currentUser.uid, items: cartSnap.val(), address: addressSnap.val(), totalAmount: total, paymentMode: paymentMode, status: 'Order Placed', orderDate: new Date().toISOString() }; 
                 
                 if (paymentMode === 'ONLINE') {
-                    // NOTE: Replace "YOUR_RAZORPAY_KEY_ID" with your actual Razorpay Key ID
                     const options = {
-                        "key": "YOUR_RAZORPAY_KEY_ID", 
+                        "key": "YOUR_RAZORPAY_KEY_ID", // अपना Razorpay Key ID डालें
                         "amount": total * 100,
                         "currency": "INR",
-                        "name": settings.name || "Qadri Shop",
+                        "name": "Qadri Shop",
                         "description": "Order Payment",
                         "handler": async function (response){
                             orderData.status = 'Paid, Order Placed';
@@ -1050,7 +875,7 @@
                             "contact": addressSnap.val().mobile
                         },
                         "theme": {
-                            "color": "#3399cc" // Or use a color from your settings
+                            "color": "#3399cc"
                         }
                     };
                     const rzp1 = new Razorpay(options);
@@ -1108,7 +933,7 @@
                 const isCancellable = order.status === 'Order Placed'; 
                 const firstItem = Object.values(order.items)[0];
                 const statusPlaced = ['Order Placed', 'Paid, Order Placed'].includes(order.status);
-                const statusDispatched = ['Dispatched'].includes(order.status); // Only consider 'Dispatched' for this step
+                const statusDispatched = ['Dispatched', 'Delivered'].includes(order.status);
                 const statusDelivered = ['Delivered'].includes(order.status);
                 
                 let statusTrackerHTML = `
@@ -1251,4 +1076,4 @@
         document.getElementById('add-new-address-btn2').addEventListener('click', () => openAddAddressScreen('delivery-address-screen'));
     </script>
 </body>
-</html>
+</html>;
