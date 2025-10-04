@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Qadri Shop</title>
+
+    <!-- PWA (Progressive Web App) Manifest and Theme Color -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6a11cb"/>
+    <link rel="apple-touch-icon" href="https://i.ibb.co/b3bZzY4/icon-192.png">
+
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     
     <!-- Open Graph Meta Tags for better sharing preview -->
@@ -349,6 +355,11 @@
                 <div class="profile-card" id="profile-my-favorites"> <svg class="profile-card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 21l-7.682-7.682a4.5 4.5 0 010-6.364z"></path></svg> <span class="profile-card-text">My Favorites</span> </div>
                 <div class="profile-card" id="profile-my-addresses"> <svg class="profile-card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg> <span class="profile-card-text">My Addresses</span> </div>
                 <div class="profile-card" id="profile-edit-profile"> <svg class="profile-card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21H3v-3.5L16.732 3.732z"/></svg> <span class="profile-card-text">Edit Profile</span> </div>
+                <!-- Install App Button - Added -->
+                <div id="install-app-btn" class="profile-card" style="display: none;">
+                    <svg class="profile-card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span class="profile-card-text">Install App</span>
+                </div>
                 <div id="logout-btn" class="profile-card logout"> <svg class="profile-card-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg> <span class="profile-card-text">Logout</span> </div>
             </div>
         </div>
@@ -1074,6 +1085,49 @@
         document.getElementById('profile-edit-profile').addEventListener('click', () => { if(currentUser) { loadUserProfileForEdit(); showScreen('edit-profile-screen'); } else { alert("Please login to edit your profile."); } });
         document.getElementById('add-new-address-btn1').addEventListener('click', () => openAddAddressScreen('address-screen'));
         document.getElementById('add-new-address-btn2').addEventListener('click', () => openAddAddressScreen('delivery-address-screen'));
+
+
+        // --- PWA Installation Logic ---
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js') // Use './sw.js' for relative path
+              .then(registration => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+              })
+              .catch(err => {
+                console.log('ServiceWorker registration failed: ', err);
+              });
+          });
+        }
+
+        let deferredPrompt;
+        const installAppBtn = document.getElementById('install-app-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          // Prevent the mini-infobar from appearing on mobile
+          e.preventDefault();
+          // Stash the event so it can be triggered later.
+          deferredPrompt = e;
+          // Update UI to notify the user they can install the PWA
+          installAppBtn.style.display = 'flex';
+        });
+
+        installAppBtn.addEventListener('click', (e) => {
+          // Hide the app install button
+          installAppBtn.style.display = 'none';
+          // Show the install prompt
+          deferredPrompt.prompt();
+          // Wait for the user to respond to the prompt
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('User accepted the A2HS prompt');
+            } else {
+              console.log('User dismissed the A2HS prompt');
+            }
+            deferredPrompt = null;
+          });
+        });
+
     </script>
 </body>
-</html>;
+</html>
